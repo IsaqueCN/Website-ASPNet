@@ -48,5 +48,33 @@ namespace Website_ASPNet.SQL.Tables
                 }
             }
         }
+
+        // Inserts to table and returns number of rows affected
+        public int Post(string name)
+        {
+            using (MySqlConnection connection = db.GetConnection())
+            {
+                connection.Open();
+
+                using (MySqlCommand command = new MySqlCommand($"INSERT INTO Cadastro(Nome) Values('{name}')", connection))
+                {
+                    return command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        // Deletes from table and returns the number of rows affected
+        public int Delete(int id)
+        {
+            using (MySqlConnection connection = db.GetConnection())
+            {
+                connection.Open();
+
+                using (MySqlCommand command = new MySqlCommand($"DELETE FROM Cadastro WHERE ID = {id}", connection))
+                {
+                    return command.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }

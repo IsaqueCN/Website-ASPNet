@@ -14,7 +14,10 @@ namespace Website_ASPNet
             Database database = new Database(connectionString);
 
             APIRouter apiRouter = new APIRouter();
+            SQLTables sqlFunctions = new SQLTables(database);
+            SQLRouters sqlRouters = new SQLRouters(sqlFunctions);
             apiRouter.UseRouter(app);
+            sqlRouters.UseRouters(app);
 
             app.Use(async(context, next) =>
             {
@@ -34,7 +37,7 @@ namespace Website_ASPNet
             {
                 await next();
 
-                if (context.Response.StatusCode == 404)
+                if (context.Response.StatusCode == 404 && context.Response.ContentType == null)
                 {
                     context.Response.ContentType = "text/html";
                     await context.Response.WriteAsync("<h1>Page not found!</h1>");

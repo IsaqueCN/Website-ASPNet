@@ -1,3 +1,6 @@
+using MySql.Data.MySqlClient;
+using Website_ASPNet.SQL;
+
 namespace Website_ASPNet
 {
     public class Program
@@ -6,6 +9,12 @@ namespace Website_ASPNet
         {
             var builder = WebApplication.CreateBuilder(args);
             var app = builder.Build();
+
+            string connectionString = app.Configuration.GetConnectionString("DefaultConnection");
+            Database database = new Database(connectionString);
+
+            APIRouter apiRouter = new APIRouter();
+            apiRouter.UseRouter(app);
 
             app.Use(async(context, next) =>
             {

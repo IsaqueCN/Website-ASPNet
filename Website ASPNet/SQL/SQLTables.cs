@@ -5,14 +5,14 @@ namespace Website_ASPNet.SQL
 {
     public class SQLTables
     {
-        // Class that groups together all the SQL tables making it easier to access their functions
+        // Class that groups together all the SQL functions making it easier to access their functions
 
-        CadastroFunctions cadastro;
-        public CadastroFunctions Cadastro => cadastro;
+        UserFunctions user;
+        public UserFunctions User => user;
 
         public SQLTables(Database db)
         {
-            cadastro = new CadastroFunctions(db);
+            user = new UserFunctions(db);
         }
     }
 }

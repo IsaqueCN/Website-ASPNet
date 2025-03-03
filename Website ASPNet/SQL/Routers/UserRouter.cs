@@ -5,16 +5,16 @@ using Website_ASPNet.SQL.Tables;
 
 namespace Website_ASPNet.SQL.Routers
 {
-    public class CadastroRouter
+    public class UserRouter
     {
-        // Class that provides a router for the cadastro table
+        // Class that provides a router for the user table
 
-        string url = APIRouter.URL + "/cadastro";
+        string url = APIRouter.URL + "/users";
         SQLTables sqlFunctions;
 
         public string URL => url;
 
-        public CadastroRouter(SQLTables SQLFunctions)
+        public UserRouter(SQLTables SQLFunctions)
         {
             sqlFunctions = SQLFunctions;
         }
@@ -31,7 +31,7 @@ namespace Website_ASPNet.SQL.Routers
             {
                 try
                 {
-                    List<Cadastro> result = sqlFunctions.Cadastro.Get();
+                    List<User> result = sqlFunctions.User.Get();
 
                     return Results.Json(new { success = true, data = result });
                 }
@@ -46,9 +46,9 @@ namespace Website_ASPNet.SQL.Routers
             {
                 try
                 {
-                    Cadastro result = sqlFunctions.Cadastro.GetById(id);
+                    User? result = sqlFunctions.User.GetById(id);
 
-                    if (result != null && !string.IsNullOrEmpty(result.Nome))
+                    if (result != null && !string.IsNullOrEmpty(result.Name))
                         return Results.Json(new { success = true, data = result });
 
                     return Results.Json(new { success = false, message = "User not found" }, statusCode: 404);
@@ -64,14 +64,17 @@ namespace Website_ASPNet.SQL.Routers
             {
                 try
                 {
-                    Cadastro? result = await context.Request.ReadFromJsonAsync<Cadastro>();
+                    User? result = await context.Request.ReadFromJsonAsync<User>();
 
-                    if (result == null || string.IsNullOrEmpty(result.Nome))
-                        return Results.Json(new { success = false, message = "Invalid Request. Expected 'nome' on request body" }, statusCode: 400);
+                    if (result == null || string.IsNullOrEmpty(result.Name) || string.IsNullOrEmpty(result.Password))
+                        return Results.Json(new { success = false, message = "Invalid Request. Expected string 'name' and string 'passsword' on request body" }, statusCode: 400);
 
-
-                    int rowsAffected = sqlFunctions.Cadastro.Post(result.Nome);
+                    int rowsAffected = sqlFunctions.User.Post(result.Name, result.Password, result.Email);
                     return Results.Json(new { sucess = true, data = $"{rowsAffected} Rows affected." });
+                }
+                catch (JsonException err)
+                {
+                    return Results.Json(new { success = false, message = "Invalid Request. Expected string 'name' and string 'passsword' on request body" }, statusCode: 400);
                 }
                 catch (Exception err)
                 {
@@ -84,17 +87,17 @@ namespace Website_ASPNet.SQL.Routers
             {
                 try
                 {
-                    Cadastro? result = await context.Request.ReadFromJsonAsync<Cadastro>();
+                    User? result = await context.Request.ReadFromJsonAsync<User>();
 
                     if (result == null || result.ID == 0)
-                        return Results.Json(new { success = false, message = "Invalid Request. Expected 'id' on request body" }, statusCode: 400);
+                        return Results.Json(new { success = false, message = "Invalid Request. Expected numeric 'id' on request body" }, statusCode: 400);
 
-                    int rowsAffected = sqlFunctions.Cadastro.Delete(result.ID);
+                    int rowsAffected = sqlFunctions.User.Delete(result.ID);
                     return Results.Json(new { sucess = true, data = $"{rowsAffected} Rows affected." });
                 }
                 catch (JsonException err)
                 {
-                    return Results.Json(new { success = false, message = "Invalid Request. Expected 'id' to be a number" }, statusCode: 400);
+                    return Results.Json(new { success = false, message = "Invalid Request. Expected numeric 'id' on request body" }, statusCode: 400);
                 }
                 catch (Exception err)
                 {

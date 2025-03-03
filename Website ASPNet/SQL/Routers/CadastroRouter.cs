@@ -1,6 +1,7 @@
 ﻿using Org.BouncyCastle.Asn1;
 using System.Security.Policy;
 using System.Text.Json;
+using Website_ASPNet.SQL.Tables;
 
 namespace Website_ASPNet.SQL.Routers
 {
@@ -18,25 +19,44 @@ namespace Website_ASPNet.SQL.Routers
             sqlFunctions = SQLFunctions;
         }
 
+        private IResult ServerErrorHandler(Exception err)
+        {
+            Console.WriteLine(err);
+            return Results.Json(new { success = false, message = $"{err.Message}" }, statusCode: 500);
+        }
         public void UseRouter(WebApplication app)
         {
             // Get
             app.MapGet(url + "/", (HttpContext context) =>
             {
-                Dictionary<string, int> cadastroRows = sqlFunctions.Cadastro.Get();
+                try
+                {
+                    List<Cadastro> result = sqlFunctions.Cadastro.Get();
 
-                return Results.Json(new { success = true, data = cadastroRows });
+                    return Results.Json(new { success = true, data = result });
+                }
+                catch (Exception err)
+                {
+                    return ServerErrorHandler(err);
+                }
             });
 
             // GetByID
             app.MapGet(url + "/{id:int}", (HttpContext context, int id) =>
             {
-                string nome = sqlFunctions.Cadastro.GetById(id);
+                try
+                {
+                    Cadastro result = sqlFunctions.Cadastro.GetById(id);
 
-                if (!string.IsNullOrEmpty(nome))
-                    return Results.Json(new { success = true, data = nome });
+                    if (result != null && !string.IsNullOrEmpty(result.Nome))
+                        return Results.Json(new { success = true, data = result });
 
-                return Results.Json(new { success = false, message = "User not found" }, statusCode: 404);
+                    return Results.Json(new { success = false, message = "User not found" }, statusCode: 404);
+                }
+                catch (Exception err)
+                {
+                    return ServerErrorHandler(err);
+                }
             });
 
             // Post
@@ -44,21 +64,18 @@ namespace Website_ASPNet.SQL.Routers
             {
                 try
                 {
-                    JsonDocument document = await JsonDocument.ParseAsync(context.Request.Body);
-                    JsonElement nome;
+                    Cadastro? result = await context.Request.ReadFromJsonAsync<Cadastro>();
 
-                    // if ID is not in body | if it is null | if it is an empty string
-                    if (!document.RootElement.TryGetProperty("nome", out nome) || nome.ValueKind == JsonValueKind.Null || string.IsNullOrWhiteSpace(nome.GetString()))
-                    {
+                    if (result == null || string.IsNullOrEmpty(result.Nome))
                         return Results.Json(new { success = false, message = "Invalid Request. Expected 'nome' on request body" }, statusCode: 400);
-                    }
 
-                    int rowsAffected = sqlFunctions.Cadastro.Post(nome.GetString());
+
+                    int rowsAffected = sqlFunctions.Cadastro.Post(result.Nome);
                     return Results.Json(new { sucess = true, data = $"{rowsAffected} Rows affected." });
-
-                } catch (Exception err)
+                }
+                catch (Exception err)
                 {
-                    return Results.Json(new { success = false, message = $"{err.Message}" }, statusCode: 500);
+                    return ServerErrorHandler(err);
                 }
             });
 
@@ -67,29 +84,21 @@ namespace Website_ASPNet.SQL.Routers
             {
                 try
                 {
-                    JsonDocument document = await JsonDocument.ParseAsync(context.Request.Body);
-                    JsonElement idElement;
-                    int id;
+                    Cadastro? result = await context.Request.ReadFromJsonAsync<Cadastro>();
 
-                    // if ID is not in body | if it is null | if it is a string but empty
-                    if (!document.RootElement.TryGetProperty("id", out idElement)
-                    || idElement.ValueKind == JsonValueKind.Null 
-                    || (idElement.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(idElement.GetString())))
-                    {
+                    if (result == null || result.ID == 0)
                         return Results.Json(new { success = false, message = "Invalid Request. Expected 'id' on request body" }, statusCode: 400);
-                    }
 
-                    if (idElement.ValueKind == JsonValueKind.Number)
-                        id = idElement.GetInt32();
-                    else
-                        id = int.Parse(idElement.GetString());
-
-                    int rowsAffected = sqlFunctions.Cadastro.Delete(id);
+                    int rowsAffected = sqlFunctions.Cadastro.Delete(result.ID);
                     return Results.Json(new { sucess = true, data = $"{rowsAffected} Rows affected." });
-
-                } catch (Exception err)
+                }
+                catch (JsonException err)
                 {
-                    return Results.Json(new { success = false, message = $"{err.Message}" }, statusCode: 500);
+                    return Results.Json(new { success = false, message = "Invalid Request. Expected 'id' to be a number" }, statusCode: 400);
+                }
+                catch (Exception err)
+                {
+                    return ServerErrorHandler(err);
                 }
             });
         }

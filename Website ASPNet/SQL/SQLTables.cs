@@ -1,5 +1,5 @@
 ﻿using Org.BouncyCastle.Asn1.Mozilla;
-using Website_ASPNet.SQL.Tables;
+using Website_ASPNet.SQL.Functions;
 
 namespace Website_ASPNet.SQL
 {
@@ -7,12 +7,12 @@ namespace Website_ASPNet.SQL
     {
         // Class that groups together all the SQL tables making it easier to access their functions
 
-        Cadastro cadastro;
-        public Cadastro Cadastro => cadastro;
+        CadastroFunctions cadastro;
+        public CadastroFunctions Cadastro => cadastro;
 
         public SQLTables(Database db)
         {
-            cadastro = new Cadastro(db);
+            cadastro = new CadastroFunctions(db);
         }
     }
 }
